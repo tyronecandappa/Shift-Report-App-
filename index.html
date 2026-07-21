@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1f2937">
+<link rel="manifest" href="manifest.json">
+<title>Shift Reports</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f3f4f6;margin:0}
+main{max-width:900px;margin:auto;padding:20px;background:#fff;min-height:100vh}
+label{display:block;margin-top:10px;font-weight:bold}
+input,textarea{width:100%;padding:8px;box-sizing:border-box}
+input[type=checkbox]{width:auto;transform:scale(1.2)}
+button{margin-top:16px;padding:10px 16px}
+.card{border:1px solid #ddd;border-radius:6px;padding:10px;margin-top:12px}
+</style>
+</head><body><main>
+<h2>Daily Shift Report</h2>
+<label>Date</label><input id=date type=date>
+<label>Project</label><input id=project>
+<label>Location</label><input id=location>
+<label>Start Time</label><input id=start type=time>
+<label>Finish Time</label><input id=finish type=time>
+<label><input id=breakTaken type=checkbox> Break</label>
+<label>Crew</label><textarea id=crew></textarea>
+<label>Plant / Equipment</label><textarea id=plant></textarea>
+<label>Works Completed</label><textarea id=completed></textarea>
+<label>Planned Works</label><textarea id=planned></textarea>
+<label>Inclement Weather</label><textarea id=weather></textarea>
+<label>Notes</label><textarea id=notes></textarea>
+<button onclick="save()">Save Report</button>
+<h3>Saved Reports</h3><div id=list></div>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
+date.valueAsDate=new Date();
+function all(){return JSON.parse(localStorage.shiftReports||'[]')}
+function draw(){list.innerHTML='';all().forEach(r=>{let d=document.createElement('div');d.className='card';d.innerHTML='<b>'+r.date+'</b> - '+r.project+'<br>'+r.location+'<br>'+r.start+' - '+r.finish+'<br>Break: '+(r.breakTaken?'Yes':'No');list.appendChild(d);});}
+function save(){
+const r={date:date.value,project:project.value,location:location.value,start:start.value,finish:finish.value,breakTaken:breakTaken.checked,crew:crew.value,plant:plant.value,completed:completed.value,planned:planned.value,weather:weather.value,notes:notes.value};
+let a=all();a.unshift(r);localStorage.shiftReports=JSON.stringify(a);draw();alert('Saved');
+}
+draw();
+</script>
+</main></body></html>

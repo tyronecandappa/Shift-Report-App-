@@ -1,0 +1,9 @@
+{
+"name":"Shift Reports",
+"short_name":"Shift",
+"display":"standalone",
+"start_url":"./index.html",
+"background_color":"#ffffff",
+"theme_color":"#1f2937",
+"icons":[]
+}
