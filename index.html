@@ -1,0 +1,85 @@
+
+<!doctype html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<title>Shift Report</title>
+<style>
+body{font-family:Arial;background:#eef2f5;margin:0}
+main{max-width:820px;margin:auto;background:#fff;padding:18px}
+.card,.viewer{border:1px solid #ccd3db;border-radius:8px;padding:12px;margin:10px 0}
+label{display:block;font-weight:bold;margin-top:10px}
+input,textarea{width:100%;padding:8px;box-sizing:border-box}
+textarea{min-height:60px}
+.inline{display:flex;align-items:center;gap:8px;margin-top:10px}
+button{padding:10px 14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{border:1px solid #ddd;border-radius:6px;padding:6px;text-align:center;font-size:12px}
+.dot{width:7px;height:7px;background:#1976d2;border-radius:50%;margin:4px auto 0}
+.small{color:#555;font-size:13px}
+</style></head><body><main>
+<h2>Shift Report</h2>
+<div class="card">
+<b>Quick View</b><br>
+<div id="quickText">No reports saved.</div>
+<button onclick="toggle(0)">View Last Report</button>
+</div>
+
+<label>Date</label><input id=date type=date>
+<label>Project</label><input id=project>
+<label>Location</label><input id=location>
+<label>Start</label><input id=start type=time>
+<label>Finish</label><input id=finish type=time>
+<div class="inline"><input id=breakBox type=checkbox style="width:auto"><label style="margin:0">Breaks</label></div>
+<p><b>Hours Worked:</b> <span id=hours>0.00</span></p>
+<label>Crew</label><textarea id=crew></textarea>
+<label>Works Completed</label><textarea id=completed></textarea>
+<label>Planned Works</label><textarea id=planned></textarea>
+<label>Delays</label><textarea id=delays></textarea>
+<label>Inclement Weather</label><textarea id=weather></textarea>
+<label>Notes</label><textarea id=notes></textarea>
+<button id=saveBtn>Save Report</button>
+
+<h3>Saved Reports</h3>
+<div id=list></div>
+<div id=viewer class="viewer" style="display:none"></div>
+
+<div class="card">
+<b>Calendar</b>
+<div id=calendar class="cal"></div>
+</div>
+
+<script>
+let editIndex=null,openIndex=null;
+const fields=["date","project","location","start","finish","crew","completed","planned","delays","weather","notes"];
+const fmt=t=>(t||"").split("\n").filter(x=>x.trim()).map(x=>"• "+x).join("<br>");
+function data(){return JSON.parse(localStorage.reports||"[]")}
+function calc(){if(!start.value||!finish.value)return;let s=start.value.split(":"),f=finish.value.split(":");let m=(+f[0]*60+ +f[1])-(+s[0]*60+ +s[1]);let d=new Date(date.value).getDay();if(breakBox.checked&&d>0&&d<6)m-=30;hours.textContent=(m/60).toFixed(2)}
+[start,finish,date,breakBox].forEach(e=>e.onchange=calc);
+function render(){
+ let a=data();
+ quickText.innerHTML=a.length?`${a[0].date} - ${a[0].project}`:"No reports saved.";
+ list.innerHTML="";
+ a.forEach((r,i)=>{let c=document.createElement("div");c.className="card";c.innerHTML=`${openIndex===i?"▲":"▼"} <b>${r.date}</b> - ${r.project}`;c.onclick=()=>toggle(i);list.appendChild(c)});
+ calendar.innerHTML="";
+ let dots=new Set(a.map(r=>r.date.split("-")[2]));
+ for(let i=1;i<=31;i++){let d=document.createElement("div");d.className="day";d.innerHTML=i+(dots.has(String(i).padStart(2,"0"))?'<div class="dot"></div>':'');calendar.appendChild(d);}
+}
+function toggle(i){
+ let a=data(); if(!a.length)return;
+ if(openIndex===i){viewer.style.display="none";openIndex=null;render();return;}
+ openIndex=i; let r=a[i]; viewer.style.display="block";
+ viewer.innerHTML=`<h3>${r.date}</h3><div class="small"><b>Project:</b> ${r.project}<br><b>Location:</b> ${r.location}<br><b>Hours Worked:</b> ${r.hours}</div><hr>
+ <b>Crew</b><br>${fmt(r.crew)}<hr>
+ <b>Works Completed</b><br>${fmt(r.completed)}<hr>
+ <b>Planned Works</b><br>${fmt(r.planned)}<hr>
+ <b>Delays</b><br>${fmt(r.delays)}<hr>
+ <b>Inclement Weather</b><br>${fmt(r.weather)}<hr>
+ <b>Notes</b><br>${fmt(r.notes)}<hr>
+ <button onclick="event.stopPropagation();edit(${i})">Edit</button>`;
+ render();
+}
+function edit(i){let r=data()[i];editIndex=i;fields.forEach(f=>document.getElementById(f).value=r[f]||"");breakBox.checked=r.breakTaken;hours.textContent=r.hours;saveBtn.textContent="Save Changes";scrollTo(0,0);}
+saveBtn.onclick=function(){calc();let r={};fields.forEach(f=>r[f]=document.getElementById(f).value);r.breakTaken=breakBox.checked;r.hours=hours.textContent;let a=data();if(editIndex==null)a.unshift(r);else{a[editIndex]=r;editIndex=null;saveBtn.textContent="Save Report";}localStorage.reports=JSON.stringify(a);render();alert("Report saved");}
+render();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+</script>
+</main></body></html>
